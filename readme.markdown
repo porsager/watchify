@@ -7,6 +7,11 @@ watch mode for [browserify](https://github.com/substack/node-browserify) builds
 Update any source file and your browserify bundle will be recompiled on the
 spot.
 
+# single-write
+
+This fork of watchify adds the `--single-write` parameter which doesn't stream to the output file, but writes it all at once after bundling.
+This avoids triggering watches multiple times on the output file.
+
 # example
 
 ```
