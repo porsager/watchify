@@ -9,6 +9,7 @@ var w = fromArgs(process.argv.slice(2));
 
 var outfile = w.argv.o || w.argv.outfile;
 var verbose = w.argv.v || w.argv.verbose;
+var singleWrite = w.argv['single-write'];
 
 if (w.argv.version) {
     console.error('watchify v' + require('../package.json').version +
@@ -35,14 +36,21 @@ bundle();
 function bundle () {
     var didError = false;
     var writer = through();
-    var wb = w.bundle();
-    
-    w.pipeline.get('pack').once('readable', function() {
-        if (!didError) {
-            wb.pipe(writer);
-        }
-    });
-    
+    var wb;
+
+    if (singleWrite) {
+        wb = w.bundle(function(err, src) {
+            if (src) writer.end(src);
+        });
+    } else {
+        wb = w.bundle();
+        w.pipeline.get('pack').once('readable', function() {
+            if (!didError) {
+                wb.pipe(writer);
+            }
+        });
+    }
+
     wb.on('error', function (err) {
         console.error(String(err));
         if (!didError) {
@@ -50,7 +58,7 @@ function bundle () {
             writer.end('console.error(' + JSON.stringify(String(err)) + ');');
         }
     });
-    
+
     writer.once('readable', function() {
         var outStream = outpipe(outfile);
         outStream.on('error', function (err) {
